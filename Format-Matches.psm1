@@ -24,26 +24,28 @@ function Format-Matches {
             }
         }
 
-        function Write-Match($match) {
-            Write-Host "$($match.LineNumber): " -NoNewLine -ForegroundColor Blue
+        function Write-Match($matchInfo) {
+            Write-Host "$($matchInfo.LineNumber): " -NoNewLine -ForegroundColor Blue
 
-            $line = $match.Line
+            $line = $matchInfo.Line
             $start = 0
 
-            foreach ($lineMatch in $match.Matches) {
-                if ($lineMatch.Index -gt $start) {
-                    Write-Host -NoNewLine "$($line.Substring($start, $lineMatch.Index))"
+            foreach ($match in $matchInfo.Matches) {
+                if ($match.Index -gt $start) {
+                    Write-Host -NoNewLine "$($line.Substring($start, $match.Index - $start))"
                 }
 
-                Write-Host $lineMatch.Value -NoNewLine -BackgroundColor DarkBlue
-                $start = $lineMatch.Index + $lineMatch.Length
+                Write-Host $match.Value -NoNewLine -BackgroundColor DarkBlue
+                $start = $match.Index + $match.Length
             }
 
             Write-Host $line.Substring($start)
         }
 
         $match = $_
-        $firstVisibleLineNumber = $match.LineNumber - $match.Context.DisplayPreContext.Length
+        $preContext = $match.Context.DisplayPreContext
+        $postContext = $match.Context.DisplayPostContext
+        $firstVisibleLineNumber = $match.LineNumber - $preContext.Length
 
         if ($match.Path -ne $currentPath) {
             Write-FileHeader $match.Path
@@ -54,11 +56,11 @@ function Format-Matches {
             Write-Host "..." -ForegroundColor DarkGray
         }
 
-        Write-Context $match.Context.DisplayPreContext ($match.LineNumber - $match.Context.DisplayPreContext.Count)
+        Write-Context $preContext ($match.LineNumber - $preContext.Length)
         Write-Match $match
-        Write-Context $match.Context.DisplayPostContext ($match.LineNumber + 1)
+        Write-Context $postContext ($match.LineNumber + 1)
 
-        $lastPrintedLineNumber = $match.LineNumber + $match.Context.DisplayPostContext.Length
+        $lastPrintedLineNumber = $match.LineNumber + $postContext.Length
     }
 }
 
